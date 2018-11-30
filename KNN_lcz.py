@@ -40,6 +40,7 @@ def min_chayi(chayi, rang):   # 计算差异列表中，n个内相近的数字�
     frequency = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     nums = []
     first = True
+    e1 = cv2.getTickCount()
     for i in range(10):   # 先排序
         for j in chayi[i]:
             if first:
@@ -48,14 +49,18 @@ def min_chayi(chayi, rang):   # 计算差异列表中，n个内相近的数字�
             else:
                 k = 0
                 for num in nums:
-                    if j < num[1]:
+                    if j <= num[1]:
                         nums.insert(k, [i, j])
+                        k = -1
                         break
                     else:
                         k += 1
-                        if k == len(nums):
-                            nums.append([i, j])
-                            break
+                if k != -1:
+                    nums.append([i, j])
+
+
+
+    print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
     print(nums)
     nums_array = np.array(nums)[:rang+1, 0]
     print(nums_array)
@@ -85,19 +90,19 @@ def recognition(test_img_path='test_image.bmp', sample_path='numbers.npz', rang=
         image_chayi.append([i])
         for k in range(len(image[i])-1):          # 初始化差异度列表
             image_chayi[i].append(0)
+        e1 = cv2.getTickCount()
         for img in image[i]:
             if j == 0:          # 首个是数字标签，跳过
                 j += 1
                 continue
             image_chayi[i][j] = chaiyi(res, img)      # 计算与每个样本的差异，存入差异列表
             j += 1
+        print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
     print(image_chayi)
+    e1 = cv2.getTickCount()
     the_num = min_chayi(image_chayi, rang)   # 处理差异列表，得出最终数字
+    print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
     return the_num
-    cv2.imshow("image", res)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
 
-number = recognition('6_476.bmp')
-print('结果是'+str(number))
+
