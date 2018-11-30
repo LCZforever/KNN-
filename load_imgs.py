@@ -3,6 +3,11 @@ import cv2
 from multiprocessing import Pool
 import numpy as np
 
+def deal_input_photo(image):
+    ret, img = cv2.threshold(image, 175, 255, cv2.THRESH_BINARY)  # 二值
+    res = cv2.resize(img, (28, 28), interpolation=cv2.INTER_CUBIC)   # 图片矩阵的缩放
+    return res
+
 
 def load_num_pic(num):
     img = [num]
@@ -14,6 +19,7 @@ def load_num_pic(num):
             print('break in ' + 't10k-images/' + i_s + '_' + j_s + '.bmp')
             break
         else:
+            image = deal_input_photo(image)
             img.append(image)
     return img
 

@@ -1,13 +1,13 @@
 # 相当于草稿本，随便写点什么
 # 用于测试整个程序，生成准确率和错误信息
 # 最后这里面向给用户
-from multiprocessing import Pool
+import cv2
+import numpy as np
 
-def haha(num):
-    return num
+sample_path='numbers.npz'
+num = np.load(sample_path)  # 读入样本
+image = num['nums']
 
-
-if __name__ == '__main__':
-    pool = Pool()
-    re_list = pool.map(haha, [i for i in range(10)])
-    print(re_list)
+cv2.imshow("image", image[2][8])
+cv2.waitKey(0)
+cv2.destroyAllWindows()
