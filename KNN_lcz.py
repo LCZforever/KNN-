@@ -1,7 +1,8 @@
 # KNN_lcz 就是LCZ写的KNN,用于生成和加载数据集
 import cv2
 import numpy as np
-
+import heapq
+from collections import Counter
 
 def fan_se(image):   # 反色
     height, width = image.shape
@@ -21,6 +22,8 @@ def fan_se(image):   # 反色
 
 def deal_test_photo(image_path):
     image = cv2.imread(image_path, 0)   # 黑白读取
+    if image is None:
+        return None
     ret, img = cv2.threshold(image, 175, 255, cv2.THRESH_BINARY)  # 二值
     res = cv2.resize(img, (28, 28), interpolation=cv2.INTER_CUBIC)   # 缩放
     out = fan_se(res)  # 反色
@@ -36,55 +39,29 @@ def chaiyi(image_a,image_b):   # 计算两张图的差异度,这里使用最简�
     return chayi_num
 
 
-def min_chayi(chayi, rang):   # 计算差异列表中，n个内相近的数字个数，并返回次数最多的数字
-    frequency = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    nums = []
-    first = True
-    e1 = cv2.getTickCount()
-    for i in range(10):   # 先排序
-        for j in chayi[i]:
-            if first:
-                nums.append([i, j])
-                first = False
-            else:
-                k = 0
-                for num in nums:
-                    if j <= num[1]:
-                        nums.insert(k, [i, j])
-                        k = -1
-                        break
-                    else:
-                        k += 1
-                if k != -1:
-                    nums.append([i, j])
+def change_list_form(lis):   # 改变列表的形状：10*n -> (10*n)*(2*1)
+    new_lis = []
+    for i,li in zip(range(len(lis)), lis):
+        for j in li:
+            new_lis.append([i, j])
+    return new_lis
 
 
-
-    print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
-    print(nums)
-    nums_array = np.array(nums)[:rang+1, 0]
-    print(nums_array)
-    for i in nums_array:            # 统计次数
-            frequency[i] += 1
-
-    print(frequency)
-    times = frequency[0]
-    result = 0
-    n = 0
-    for i in frequency:     # 选最大的数字的序号
-        if times < i:
-            times = i
-            result = n
-        n += 1
-    return result
+def min_chayi(chayi, rang):   # 计算差异列表中，range个内相近的数字的个数，并返回次数最多的数字
+    chayi_s = change_list_form(chayi)
+    cheap = heapq.nsmallest(100, chayi_s, key=lambda s: s[1])  # 通过索引找出最大的几个单位组成列表
+    nums_array = np.array(cheap)[:, 0]
+    num_counts = Counter(nums_array)    # 选取列表中出现次数最多的数字以及其出现的次数
+    top_num = num_counts.most_common(10)
+    return top_num[0][0]
 
 
-
-def recognition(test_img_path='test_image.bmp', sample_path='numbers.npz', rang=100):  # 总函数,参数:测试图，样本路径名，近邻范围
-    num = np.load(sample_path)   # 读入样本
-    image = num['nums']
-    image_chayi = []  # 差异度矩阵
+def recognition(test_img_path='test_image.bmp', sample_path='numbers.npy', rang=100):  # 总函数,参数:测试图，样本路径名，近邻范围
     res = deal_test_photo(test_img_path)   # 对测试图片进行预处理
+    if res is None:
+        return None
+    image = np.load(sample_path)   # 读入样本
+    image_chayi = []  # 差异度矩阵
     for i in range(10):
         j = 0
         image_chayi.append([i])
@@ -97,8 +74,8 @@ def recognition(test_img_path='test_image.bmp', sample_path='numbers.npz', rang=
                 continue
             image_chayi[i][j] = chaiyi(res, img)      # 计算与每个样本的差异，存入差异列表
             j += 1
-        print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
-    print(image_chayi)
+        #print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间
+    #print(image_chayi)
     e1 = cv2.getTickCount()
     the_num = min_chayi(image_chayi, rang)   # 处理差异列表，得出最终数字
     print('读取时间为:' + str((cv2.getTickCount() - e1) / cv2.getTickFrequency()) + 's')  # 读取时间

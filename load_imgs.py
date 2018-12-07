@@ -10,9 +10,9 @@ def deal_input_photo(image):
 
 
 def load_num_pic(num):
-    img = [num]
+    img = [[num]]
     i_s = str(num)
-    for j in range(1200):
+    for j in range(500):
         j_s = str(j)
         image = cv2.imread('t10k-images/' + i_s + '_' + j_s + '.bmp', 0)
         if image is None:
@@ -31,8 +31,9 @@ if __name__ == '__main__':
     print('读取时间为:'+str((cv2.getTickCount() - e1) / cv2.getTickFrequency())+'s')   # 读取时间
     image = [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0]]  # 用于按顺序存放数字图片矩阵,从一开始
     for i in range(10):   # 重新排序
-        image[result_list[i][0]] = result_list[i]
-
-    np.savez('numbers.npz', nums=image)
+        image[result_list[i][0][0]] = result_list[i]
+    for i in range(10):
+        print(len(image[i]))
+    np.save('numbers.npy', image)
 
 
